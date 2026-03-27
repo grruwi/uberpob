@@ -1,0 +1,1152 @@
+# Baza verified buildów UberPoB
+# Struktura każdego archetype:
+#   detection: jak rozpoznać build
+#   benchmarks: minimalne/optymalne wartości statów
+#   notes: dodatkowe porady specyficzne dla archetype
+
+archetypes:
+
+  RF Chieftain:
+    pobb_in: "https://pobb.in/9RmwWYK1HhZX"
+    tier: "B"
+    newcomer_friendly: true
+    detection:
+      skill_keywords: ["Righteous Fire"]
+      ascendancy_keywords: ["Chieftain"]
+    benchmarks:
+      Life:
+        min: 4500
+        good: 6000
+        unit: ""
+      FireResist:
+        min: 90
+        good: 90
+        note: "potrzebujesz 90% bo RF cię pali — overcap na Siregonian leaguestone/flasks"
+        unit: "%"
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      CombinedDPS:
+        min: 300000
+        good: 1000000
+        unit: ""
+      Mana:
+        min: 200
+        good: 400
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 10000
+        good: 15000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 60000
+        good: 80000
+        unit: ""
+    notes:
+      - "RF Chieftain skaluje głównie przez: %increased Life, %increased Fire Damage, Burning Damage, %increased Area Damage"
+      - "Leech od Chieftain Taifa = darmowe regen — sprawdź czy masz node Taifa w drzewku"
+      - "Endurance Charges = darmowa redukcja fizyczna — Iron Reflexes + ER konwertuje Evasion do Armour"
+      - "Sacred Ground z Valako daje regenerację ES/Life w blessed ground — przydatny dla survivability"
+      - "Brak RF w PlayerStat często = RF nie jest wybrane jako main skill w PoB config"
+
+  RF Inquisitor:
+    tier: "B"
+    detection:
+      skill_keywords: ["Righteous Fire"]
+      ascendancy_keywords: ["Inquisitor"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5500
+        unit: ""
+      FireResist:
+        min: 90
+        good: 90
+        unit: "%"
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      CombinedDPS:
+        min: 500000
+        good: 2000000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "RF Inquisitor skaluje inaczej niż Chieftain: Consecrated Ground + Pious Path = ogromna regen na ele res"
+      - "Inevitable Judgement (Inquisitor) = ignoruje enemy ele resistance — czyste skalowanie przez Fire Damage"
+      - "Potrzebujesz dużo %Fire Damage, %Burning Damage, Concentrated Effect, Elemental Focus"
+      - "Mniejszy survivability niż Chieftain ale wyższy DPS ceiling"
+
+  Explosive Arrow Ballista:
+    tier: "B"
+    detection:
+      skill_keywords: ["Explosive Arrow", "Ballista Totem"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5500
+        unit: ""
+      FireResist:
+        min: 75
+        good: 75
+        unit: "%"
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      CombinedDPS:
+        min: 1000000
+        good: 5000000
+        unit: ""
+      AttackSpeed:
+        min: 3.0
+        good: 5.0
+        note: "szybkość balisty = więcej strzał = szybsze ładowanie fuse"
+        unit: "/s"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "EA Ballista skaluje przez: Fuse Count (max 20), Fire Damage, AoE, Attack Speed balisty"
+      - "Elementalist z Shaper of Flames = Ignite DPS, Chieftain = więcej balist i recovery"
+      - "Pinpoint Support zwiększa czas fuse = więcej strzał per fuse = więcej DPS"
+      - "Divergent EA = większe AoE po pełnym fuse — warto mieć Alternate Quality"
+
+  Boneshatter Juggernaut:
+    tier: "A"
+    detection:
+      skill_keywords: ["Boneshatter"]
+      ascendancy_keywords: ["Juggernaut"]
+    benchmarks:
+      Life:
+        min: 5000
+        good: 7000
+        unit: ""
+      PhysicalDamageReduction:
+        min: 60
+        good: 80
+        note: "Jugg skaluje PDR przez Unbreakable — liczy się redukcja końcowa, nie surowy Armour"
+        unit: "%"
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      CombinedDPS:
+        min: 2000000
+        good: 10000000
+        unit: ""
+      AttackSpeed:
+        min: 4.0
+        good: 6.0
+        unit: "/s"
+      PhysicalMaximumHitTaken:
+        min: 12000
+        good: 20000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 60000
+        good: 100000
+        unit: ""
+    notes:
+      - "Boneshatter skaluje przez Trauma stacks — więcej hitów = więcej stasków = więcej DPS"
+      - "Juggernaut: Unbreakable konwertuje Armour rating do Physical DR cap"
+      - "Endurance Charges = kluczowe, Ralakesh's Impatience buty eliminują decay"
+      - "Damage taken = self-damage z Trauma — potrzebujesz dużo life regen lub życia"
+      - "Berserk skill dla burst window na bossach"
+
+  # === SUSHI TIER A+ (3.28 Mirage) ===
+
+  Kinetic Fusillade Ballista Hierophant:
+    pobb_in: "https://pobb.in/MpDjiqpnP2sV"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Kinetic Fusillade"]
+      ascendancy_keywords: ["Hierophant"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4500
+        unit: ""
+      EnergyShield:
+        min: 500
+        good: 1500
+        unit: ""
+      CombinedDPS:
+        min: 500000
+        good: 1500000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Build skaluje przez liczbę balist (Hiero może mieć 5+) i Chain — każdy pocisk KF skacze dalej, czyniąc z tego niezwykłe AoE"
+      - "Fanaticism (Hiero) = 75% reduced cost na foreground skille — podtrzymanie Many jest kluczowe"
+      - "Sanctuary of Thought (Hiero node) = regen many per Arcane Surge — sprawdź czy masz"
+
+  Bleed Slam Slayer:
+    pobb_in: "https://pobb.in/QKoFv0repDMz"
+    tier: "A+"
+    detection:
+      skill_keywords: []
+      ascendancy_keywords: ["Slayer"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5000
+        unit: ""
+      TotalDotDPS:
+        min: 5000000
+        good: 20000000
+        note: "bleed DPS — to jest główne źródło dmg, nie hit"
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalDamageReduction:
+        min: 40
+        good: 60
+        note: "surowy Armour nie ma znaczenia — liczy się całkowita redukcja fizyczna (Armour + Endurance Charges + inne)"
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "Build zabija przez bleed DoT, nie przez hit — TotalDotDPS jest właściwą miarą DPS, nie TotalDPS"
+      - "Slayer: Overwhelm (ignoruje physical DR) + Headsman (increased dmg vs full life/low life) = core offense"
+      - "Bleed skaluje przez: Physical Damage, Chance to Bleed, Attack Speed (więcej hitów = więcej bleedów), Damage over Time Multiplier"
+      - "Slayer leech działa nawet bez trafień gdy bleed tyka — survivability przez leech na DoT"
+
+  Kinetic Blast of Clustering Necromancer:
+    pobb_in: "https://pobb.in/0wQ1QP5GgQua"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Kinetic Blast"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      EnergyShield:
+        min: 5000
+        good: 8000
+        note: "CI build — Life = 1, ES to jedyna HP"
+        unit: ""
+      CombinedDPS:
+        min: 1000000
+        good: 3000000
+        unit: ""
+      ChaosResist:
+        min: -100
+        good: -100
+        note: "CI = immunitet na chaos dmg, chaos res nieważna"
+        unit: "%"
+      ElementalMaximumHitTaken:
+        min: 30000
+        good: 60000
+        note: "CI build — phys max hit nieistotny bo brakuje life, sprawdź tylko ele"
+        unit: ""
+    notes:
+      - "CI (Chaos Inoculation) build — Life zablokowane na 1, immunitet na chaos dmg. ES to jedyna forma HP"
+      - "Kinetic Blast of Clustering = transfigured gem, tworzy więcej eksplozji niż base KB — kluczowa dla AoE clear"
+      - "Necromancer: Mistress of Sacrifice (Bone Offering) = duży spell block z offeringu — sprawdź czy aktywne"
+      - "KB skaluje przez: proj count, Wand Physical/Ele dmg, AoE radius (clustering effect)"
+
+  Kinetic Blast Deadeye:
+    pobb_in: "https://pobb.in/h-si3kweTn_N"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Kinetic Blast"]
+      ascendancy_keywords: ["Deadeye"]
+    benchmarks:
+      Life:
+        min: 3000
+        good: 4000
+        unit: ""
+      Evasion:
+        min: 10000
+        good: 16000
+        unit: ""
+      CombinedDPS:
+        min: 5000000
+        good: 18000000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "KB Deadeye skaluje przez proj count i Deadeye's Endless Munitions (+1 proj, +1 chain) — każda eksplozja to osobny hit"
+      - "Deadeye Far Shot: dmg skaluje z dystansem — trzymaj się z daleka od mobów"
+      - "Gale Force charges (Tailwind) = stacking attack speed — sprawdź czy masz Gathering Winds node"
+      - "Wand + Quiver lub Wand + Shield — porównaj setupy pod kątem proj dmg vs survivability"
+
+  Lightning Arrow Elemental Hit Deadeye:
+    pobb_in: "https://pobb.in/G3Z11bv7H_5J"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Lightning Arrow", "Elemental Hit of the Spectrum"]
+      ascendancy_keywords: ["Deadeye"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4500
+        unit: ""
+      Evasion:
+        min: 8000
+        good: 13000
+        unit: ""
+      CombinedDPS:
+        min: 5000000
+        good: 16000000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Hybryda LA (clear) + EHotS (single target) — dwa różne skille, LA robi AoE przez chain, EHotS wallops bossy"
+      - "Elemental Hit of the Spectrum = transfigured gem, losowy element każde trafienie z bonusem jeśli masz elementy combo"
+      - "Deadeye Focal Point = proj dmg gdy proj trafią tego samego celu — klucz dla single target DPS"
+
+  Elemental Hit Slayer:
+    pobb_in: "https://pobb.in/kzX1vvOncDR1"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Elemental Hit"]
+      ascendancy_keywords: ["Slayer"]
+    benchmarks:
+      Life:
+        min: 4500
+        good: 5500
+        unit: ""
+      Evasion:
+        min: 10000
+        good: 28000
+        unit: ""
+      CombinedDPS:
+        min: 5000000
+        good: 50000000
+        note: "DPS liczony z aktywnym shrine — bez shrine DPS jest dramatycznie niższy"
+        unit: ""
+      ChaosResist:
+        min: 0
+        good: 75
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "CORE MECHANIC: The Gull (helm) + Screams of the Desiccated (belt) = każdy shrine daje +1000% AoE. Bez tego setupu build traci 70% swojego AoE"
+      - "Create Lesser Shrine (pasek The Screams) = własny shrine on demand — sprawdź czy pasek jest i czy jest aktywowany"
+      - "Slayer Headsman + Overwhelm + leech na EH = solidna ofensywa i survivability jednocześnie"
+      - "EH losuje element każde trafienie — Dying Sun lub wielokrotne proj skalują to masowo"
+
+  Earthshatter Berserker:
+    tier: "A+"
+    detection:
+      skill_keywords: ["Earthshatter"]
+      ascendancy_keywords: ["Berserker"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5500
+        unit: ""
+      CombinedDPS:
+        min: 3000000
+        good: 15000000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 15000
+        note: "Berserker Aspect of Carnage = +10% dmg taken — kompensuj przez wyższy phys max hit. 30k+ = solidnie, 50k+ = wybitnie"
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 40000
+        good: 70000
+        unit: ""
+    notes:
+      - "Earthshatter tworzy spikes które eksplodują przy wyzwoleniu — core mechanic to spike positioning"
+      - "Berserker: Rite of Ruin (Rage) = masywny dmg przy pełnym rage, Aspect of Carnage = 40% more dmg ale +10% dmg taken"
+      - "Rage mechanic = stale generuj rage przez trafienia, nie trać go"
+      - "Brak referencyjnego PoB — benchmarki orientacyjne"
+
+  Archmage Hierophant:
+    pobb_in: "https://pobb.in/Hmlt9phwV-hw"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Archmage"]
+      ascendancy_keywords: ["Hierophant"]
+    benchmarks:
+      Life:
+        min: 3000
+        good: 3600
+        unit: ""
+      EnergyShield:
+        min: 3000
+        good: 5000
+        unit: ""
+      Mana:
+        min: 3000
+        good: 5000
+        note: "Archmage dodaje dmg = % unreserved mana — im więcej many, tym więcej DPS"
+        unit: ""
+      CombinedDPS:
+        min: 1000000
+        good: 2500000
+        unit: ""
+      ChaosResist:
+        min: 0
+        good: 76
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 40000
+        good: 70000
+        unit: ""
+    notes:
+      - "CORE MECHANIC: Archmage Support dodaje lightning dmg równy % unreserved mana per cast — mana = DPS"
+      - "Hierophant Arcane Blessing = Arcane Surge na totemach = permanent uptime — sprawdź totemy"
+      - "Mana reservation jest CELOWO wysoka (przez Herald of Thunder/Ice etc) żeby Archmage skalował od overflow"
+      - "Spell dowolny: Shock Nova, Ice Nova, Ball Lightning — mechanika Archmage działa z każdym"
+      - "Eldritch Battery (EB) node konwertuje ES do many — sprawdź czy jest w drzewku"
+
+  Poison Concoction of Bouncing Pathfinder:
+    pobb_in: "https://pobb.in/Xb6N6JirbqBc"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Poison Concoction"]
+      ascendancy_keywords: ["Pathfinder"]
+    benchmarks:
+      Life:
+        min: 3000
+        good: 4500
+        unit: ""
+      TotalDotDPS:
+        min: 3000000
+        good: 8000000
+        note: "poison DoT jest głównym DPS — TotalDotDPS ważniejszy niż TotalDPS (hit dmg marginalny)"
+        unit: ""
+      Evasion:
+        min: 10000
+        good: 20000
+        unit: ""
+      ChaosResist:
+        min: 0
+        good: 75
+        note: "Pathfinder może łatwo capować chaos res przez flask suffixes"
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 10000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 25000
+        good: 50000
+        unit: ""
+    notes:
+      - "CORE MECHANIC: Poison Concoction używa flaszek jako amunicji — Pathfinder Master Surgeon zapewnia nieograniczony sustain flaszkowy"
+      - "Bouncing = transfigured version, pociski odbijają się między mobami = masowy clear bez celowania"
+      - "Pathfinder: nie potrzebujesz broni — główna umiejętność oparta na flaszkach, bazuje na Life flaska"
+      - "Skalowanie: Flask Effect, Poison DoT Multi, Pathfinder Nature's Reprisal (Wither on flask use)"
+      - "Chaos res często 75%+ dzięki flask suffixes — sprawdź czy gracz ma Of Grounding/Of Resistance na flaszkach"
+
+  Glacial Cascade Mines Elementalist:
+    pobb_in: "https://pobb.in/FWYqVooMES3u"
+    tier: "A+"
+    detection:
+      skill_keywords: ["Glacial Cascade", "Blastchain Mine", "Remote Mine"]
+      ascendancy_keywords: ["Elementalist"]
+    benchmarks:
+      Life:
+        min: 3000
+        good: 3500
+        unit: ""
+      EnergyShield:
+        min: 1500
+        good: 2500
+        unit: ""
+      CombinedDPS:
+        min: 5000000
+        good: 18000000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Mine playstyle: rzucasz miny → detonujesz → burst DPS. Glacial Cascade tworzy kolumny lodu wzdłuż linii"
+      - "Elementalist Shaper of Storms: każdy non-chaos hit shockuje — permanent shock na bossach bez inwestycji"
+      - "Elementalist Mastermind of Discord: penetracja przez Herald of Ice i Thunder — sprawdź czy obydwa Herald aktywne"
+      - "Mine Throwing Speed = liczba min per sekunde = DPS — Minefield Support kluczowe"
+
+  # === SUSHI TIER A (3.28 Mirage) ===
+
+  Phys Dot Elementalist:
+    pobb_in: "https://pobb.in/-gHGSJ6nmBoZ"
+    tier: "A"
+    detection:
+      skill_keywords: ["Caustic Arrow", "Toxic Rain", "Viper Strike", "Essence Drain"]
+      ascendancy_keywords: ["Elementalist"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4500
+        unit: ""
+      TotalDotDPS:
+        min: 2000000
+        good: 5000000
+        note: "DoT jest głównym źródłem DPS — TotalDotDPS ważniejszy niż TotalDPS"
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Physical DoT Elementalist skaluje przez: Physical DoT Multiplier, Vulnerability curse, Poison/Bleed dmg"
+      - "Elementalist Mastermind of Discord: Herald of Agony/Purity buffuje DoT — sprawdź czy Heraldy aktywne"
+      - "Shaper of Flames/Storms opcjonalnie dodaje ailment layers na bossach"
+      - "DPS w PoB = 0 jeśli PoB nie ma ustawionego właściwego main skilla z DoT"
+
+  Exsanguinate Mines Trickster:
+    pobb_in: "https://pobb.in/8cJ6kaa0XPZG"
+    tier: "A"
+    detection:
+      skill_keywords: ["Exsanguinate"]
+      ascendancy_keywords: ["Trickster"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4200
+        unit: ""
+      EnergyShield:
+        min: 1500
+        good: 2500
+        unit: ""
+      Evasion:
+        min: 15000
+        good: 28000
+        unit: ""
+      CombinedDPS:
+        min: 3000000
+        good: 8000000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Exsanguinate Mines: rzucasz miny które wysyłają krwawiące tendryle — clear przez chain, boss przez stack"
+      - "Trickster Ghost Dance: ES recovery gdy unikasz trafień — synergizuje z wysokim Evasion"
+      - "Trickster Escape Artist: ES z unikania, armour z ES — sprawdź czy masz ten node"
+      - "Mine Throwing Speed = tempo rzucania min = DPS — Minefield Support kluczowe"
+
+  Storm Burst Totem Hierophant:
+    pobb_in: "https://pobb.in/QRrYaTXg4ElD"
+    tier: "A"
+    detection:
+      skill_keywords: ["Storm Burst"]
+      ascendancy_keywords: ["Hierophant"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5100
+        unit: ""
+      Mana:
+        min: 1500
+        good: 3000
+        note: "Storm Burst Totem lubi dużo many dla Arcane Surge / conduit"
+        unit: ""
+      CombinedDPS:
+        min: 1000000
+        good: 3000000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Storm Burst tworzy orby które eksplodują po czasie — totem trzyma je aktywne ciągle = stały dmg"
+      - "Hierophant Pursuit of Faith: +1 totem, totem buff — kluczowe dla DPS"
+      - "Hierophant Ritual of Awakening: life regen per totem = solidne survivability passywne"
+      - "Skalowanie: Lightning Dmg, Spell Dmg, Cast Speed totemu, AoE eksplozji"
+
+  Poison Ranged Animate Weapons Necromancer:
+    maxroll: "https://maxroll.gg/poe/pob/gm7x80au"
+    tier: "A"
+    detection:
+      skill_keywords: ["Animate Weapon"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Animate Weapons animuje bronie z podłogi — AW strzelają i zadają obrażenia przez poison DoT"
+      - "CORE: potrzebujesz stałego źródła broni na podłodze — Scourge Arrow lub inne skille generują je"
+      - "Necromancer Unnatural Strength: +2 poziomy minionów = masywny buff dla AW stats"
+      - "Ranged AW z poison skaluje przez: Minion Dmg, Poison Dmg, Minion Attack Speed"
+      - "DPS minions = 0 w standardowym PoB PlayerStat — nie oceniaj DPS z tych danych"
+
+  Dominating Blow Guardian:
+    pobb_in: "https://pobb.in/3MCc02jU8lSX"
+    tier: "A"
+    detection:
+      skill_keywords: ["Dominating Blow"]
+      ascendancy_keywords: ["Guardian"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Dominating Blow konwertuje pobite rare/unique mobs na tymczasowe miniony — core mechanic to kontrola tłumu + minion army"
+      - "Guardian Radiant Crusade: aura effect dla minionów = masywny buff — sprawdź czy Crusade node aktywny"
+      - "Guardian Unwavering Faith: aura regen dla minionów i gracza — survivability pasywna"
+      - "DPS w PoB = hit DMG DB, nie minion DPS — rzeczywisty DPS przez army jest wyższy"
+      - "Potrzebujesz minionów żeby działał — w pustych pokojach kill speed spada drastycznie"
+
+  Holy Relic Necromancer:
+    pobb_in: "https://pobb.in/tJjQ5k8gRVIS"
+    tier: "A"
+    detection:
+      skill_keywords: ["Holy Relic"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Holy Relic to minion który pulsuje sacral ground wokół gracza — dmg przez proximity, nie projectile"
+      - "CORE: Holy Relic triggeruje na każdy Melee Hit gracza — potrzebujesz szybkiego melee skilla do triggerowania"
+      - "Necromancer Plaguecraft: Minion Hit Damage = Core stat — sprawdź jewels/gear"
+      - "DPS w PoB = 0 (minion DPS nie jest w PlayerStat) — nie oceniaj jako 0 DPS build"
+      - "Skalowanie: Minion Dmg, Holy Relic level, Minion Attack Speed, trigger rate gracza"
+
+  Spectre Summoner:
+    pobb_in: "https://pobb.in/Og2D91DozNe1"
+    tier: "A"
+    detection:
+      skill_keywords: ["Raise Spectre"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5500
+        unit: ""
+      PhysicalDamageReduction:
+        min: 50
+        good: 75
+        note: "referencyjny build osiąga 90% PDR przez Armour + Endurance Charges — bardzo tanky"
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 12000
+        good: 25000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 30000
+        good: 60000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+    notes:
+      - "Spectres to najsilniejszy single-minion typ — jakość buildu zależy głównie od wybranych Spectres"
+      - "Core spectres w meta: Redemption Sentry (ranged), Pale Seraphim, Syndicate Operatives — sprawdź aktualną ligę"
+      - "DPS w PoB = 0 (minion DPS nie jest w PlayerStat) — NIE oceniaj jako 0 DPS build"
+      - "Referencyjny build: Life 5k + Armour 45k + 90% PDR — jeden z bardziej tankich necromancerów"
+      - "Necromancer Commander of Darkness: aury dla minionów — sprawdź czy Herald/Aury aktywne"
+      - "Resy w PoB mogą wyglądać źle bez aktywnych flasków — Necromancer często używa Purity aur dla overcap"
+
+  # === SUSHI TIER B+ (3.28 Mirage) ===
+
+  Cold Dot Elementalist:
+    pobb_in: "https://pobb.in/DFgxaJbycB96"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Vortex", "Cold Snap", "Creeping Frost"]
+      ascendancy_keywords: ["Elementalist"]
+    benchmarks:
+      EnergyShield:
+        min: 4000
+        good: 6000
+        note: "CI build — Life = 1, ES to jedyna HP. Nie alarmuj że Life = 1, to celowe"
+        unit: ""
+      TotalDotDPS:
+        min: 1000000
+        good: 4000000
+        note: "Cold DoT DPS — jeśli PoB pokazuje 0, main skill może nie być ustawiony w config"
+        unit: ""
+      Evasion:
+        min: 15000
+        good: 25000
+        note: "referencyjny build używa Grace — wysoka evasion jako warstwa defensywna"
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 25000
+        good: 50000
+        note: "CI — tylko ele max hit ma znaczenie, phys max hit marginalny przy braku life"
+        unit: ""
+      ChaosResist:
+        min: -100
+        good: -100
+        note: "CI = immunitet na chaos dmg, chaos res nieważna"
+        unit: "%"
+    notes:
+      - "CI (Chaos Inoculation) build — Life celowo = 1, immunitet na chaos dmg, ES to jedyna HP"
+      - "Referencyjny build: ES 5.5k + Evasion 29k — hybryda ES/Evasion"
+      - "Cold DoT skaluje przez: Cold DoT Multiplier, Hypothermia, Elementalist Shaper of Winters"
+      - "Elementalist Shaper of Winters: shards z Freeze = dodatkowe DPS warstwy"
+      - "Vortex (instant cast) + Cold Snap (Frenzy charges) to typowy core combo"
+      - "TotalDotDPS = 0 w PoB często oznacza że main skill nie jest ustawiony na DoT skill w konfiguracji"
+
+  Bleed Retaliate Gladiator:
+    pobb_in: "https://pobb.in/klkGOPXpeZ-w"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Retaliate"]
+      ascendancy_keywords: ["Gladiator"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5100
+        unit: ""
+      TotalDotDPS:
+        min: 8000000
+        good: 35000000
+        note: "bleed DoT jest głównym DPS — hit dmg nieważny"
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "Retaliate triggeruje po otrzymaniu trafienia — playstyle reaktywny, nie agresywny"
+      - "Gladiator Painforged: Retaliate procs + unblockable attacks co 3s = mechanika bloku"
+      - "Bleed skaluje przez Physical Dmg i DoT Multiplier — TotalDotDPS jest właściwą miarą"
+      - "Duży Armour = mniej dmg received = mniej potrzeba Retaliate procs dla sustain"
+
+  Flicker Strike Gladiator:
+    poe_ninja_pob: "https://poe.ninja/poe1/pob/8769d"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Flicker Strike"]
+      ascendancy_keywords: ["Gladiator"]
+    benchmarks:
+      Life:
+        min: 2500
+        good: 3000
+        unit: ""
+      CombinedDPS:
+        min: 2000000
+        good: 6000000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "Flicker Strike teleportuje do losowego moba i atakuje — wymaga Frenzy Charges do działania"
+      - "Gladiator: Blood in the Eyes (Blind) + Outmatch and Outlast (charges on kill) = sustain"
+      - "Frenzy Charge generation jest KLUCZOWE — bez tego Flicker się zatrzymuje mid-combat"
+      - "Terminus Est lub inne unikalne z on-hit Frenzy charge generation = core requirement"
+
+  SRS Necromancer:
+    maxroll: "https://maxroll.gg/poe/pob/tf11m0yd"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Summon Raging Spirit"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4600
+        unit: ""
+      EnergyShield:
+        min: 1000
+        good: 2600
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "SRS to tymczasowe miniony — spamuj ciągle, mają krótki czas życia"
+      - "Necromancer Unnatural Strength: +2 poziomy minionów = znaczący buff"
+      - "DPS w PoB = 0 (minion DPS nie w PlayerStat) — nie oceniaj przez tę metrykę"
+      - "Skalowanie: Minion Dmg, SRS level, Spell Echo (więcej SRS per cast)"
+
+  Frost Blades Slayer:
+    maxroll: "https://maxroll.gg/poe/pob/1vdnf0l1"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Frost Blades"]
+      ascendancy_keywords: ["Slayer"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4400
+        unit: ""
+      Evasion:
+        min: 10000
+        good: 19000
+        unit: ""
+      CombinedDPS:
+        min: 2000000
+        good: 5500000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "Frost Blades: melee hit + projectile ricochet — clear przez proj chain, boss przez melee"
+      - "Slayer leech + Overwhelm = dobra offensywa i survivability jednocześnie"
+      - "Skalowanie: Cold Dmg, proj count, Attack Speed"
+
+  Zoomancer Necromancer:
+    maxroll: "https://maxroll.gg/poe/pob/0nws0aiy"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Raise Zombie", "Summon Skeleton"]
+      ascendancy_keywords: ["Necromancer"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4900
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Zoomancer = szybkie miniony które gonią moby — clear przez minion mobility"
+      - "Necromancer: Mistress of Sacrifice + Bone Offering = spell block dla gracza"
+      - "DPS w PoB = 0 (minion) — nie oceniaj przez tę metrykę"
+      - "Skalowanie: Minion Speed, Minion Dmg, Feeding Frenzy Support"
+
+  Flameblast Totems Hierophant:
+    pobb_in: "https://pobb.in/-hxEKyFwQ8-v"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Flameblast"]
+      ascendancy_keywords: ["Hierophant"]
+    benchmarks:
+      Life:
+        min: 4000
+        good: 5200
+        unit: ""
+      Mana:
+        min: 2000
+        good: 4500
+        note: "Flameblast Hiero często używa Arcane Surge — mana pool kluczowy"
+        unit: ""
+      CombinedDPS:
+        min: 500000
+        good: 1500000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Flameblast ładuje się i eksploduje — totem ładuje sam, ty możesz się ruszać = bezpieczny playstyle"
+      - "Hierophant Pursuit of Faith: +1 totem, 25% dmg gdy totem aktywny — kluczowe"
+      - "Skalowanie: Fire Dmg, AoE, Cast Speed totemu (szybsze charge-up), Spell Dmg"
+
+  Holy Flame Totem Hierophant:
+    maxroll: "https://maxroll.gg/poe/pob/1afve0lx"
+    tier: "B+"
+    detection:
+      skill_keywords: ["Holy Flame Totem"]
+      ascendancy_keywords: ["Hierophant"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 4500
+        unit: ""
+      Mana:
+        min: 500
+        good: 1500
+        unit: ""
+      CombinedDPS:
+        min: 1500000
+        good: 4200000
+        unit: ""
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 45000
+        good: 75000
+        unit: ""
+    notes:
+      - "Holy Flame Totem rzuca płomienie fizyczne konwertowane na Fire — skaluje przez Phys i Fire"
+      - "Hierophant Pursuit of Faith: +1 totem, 25% dmg buff — sprawdź czy aktywny"
+      - "Skalowanie: Physical Dmg (konwertowany do Fire przez gem), Spell Dmg, liczba totemów"
+
+  # === SUSHI TIER B (3.28 Mirage) ===
+
+  Blade Vortex Elementalist:
+    pobb_in: "https://pobb.in/ucVNryve7fHT"
+    tier: "B"
+    detection:
+      skill_keywords: ["Blade Vortex"]
+      ascendancy_keywords: ["Elementalist"]
+    benchmarks:
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "BV tworzy wirujące ostrza wokół gracza — stack do 20, dmg rośnie ze stackiem"
+      - "Elementalist Shaper of Storms: shock bez inwestycji = 50% more dmg na bossach"
+      - "Skalowanie: Spell Dmg, Cast Speed (dla stackowania), Physical/Ele Dmg konwersja"
+
+  Void Shockwave Cyclone Slayer:
+    pobb_in: "https://pobb.in/cnISn6_eYXaz"
+    tier: "B"
+    detection:
+      skill_keywords: ["Cyclone", "Void Sphere"]
+      ascendancy_keywords: ["Slayer"]
+    benchmarks:
+      PhysicalMaximumHitTaken:
+        min: 8000
+        good: 12000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 50000
+        good: 80000
+        unit: ""
+    notes:
+      - "Cyclone + Void Sphere: Cyclone triggeruje Void Sphere przez CwC lub osobno"
+      - "Slayer leech na spin = survivability przez ruch"
+      - "Void Shockwave = transfigured? Sprawdź exact gem name w PoB"
+
+  Venom Gyre Cobra Lash Deadeye:
+    pobb_in: "https://pobb.in/JTt_o_fvaunN"
+    tier: "B"
+    detection:
+      skill_keywords: ["Venom Gyre", "Cobra Lash"]
+      ascendancy_keywords: ["Deadeye"]
+    benchmarks:
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "Venom Gyre zbiera whirling blades które Cobra Lash releasuje — combo mechanika"
+      - "Deadeye: proj chain, Tailwind = attack speed stacking"
+      - "Poison skaluje przez: Chaos Dmg, DoT Multi, Attack Speed (więcej hitów = więcej poison stacks)"
+
+  Lightning Arrow Deadeye:
+    tier: "A"
+    detection:
+      skill_keywords: ["Lightning Arrow"]
+      ascendancy_keywords: ["Deadeye"]
+    benchmarks:
+      Life:
+        min: 3500
+        good: 5000
+        unit: ""
+      Evasion:
+        min: 10000
+        good: 30000
+        unit: ""
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      CombinedDPS:
+        min: 500000
+        good: 3000000
+        unit: ""
+      AttackSpeed:
+        min: 4.0
+        good: 6.0
+        unit: "/s"
+      PhysicalMaximumHitTaken:
+        min: 5000
+        good: 8000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 35000
+        good: 65000
+        unit: ""
+    notes:
+      - "LA Deadeye skaluje przez: proj count, chain count, Gathering Winds (Deadeye tailwind), attack speed"
+      - "Deadeye Far Shot + Focal Point (Deadeye) = ogromne proj dmg"
+      - "Gale Force charges (Deadeye) — sprawdź czy masz Gather Winds node"
+      - "Quiver: Hyrri's Quiver lub rare z +1 arrow, attack speed, ele dmg"
+
+  Cast When Stun Chieftain:
+    pobb_in: "https://pobb.in/J8Z_ekJsW1hs"
+    tier: "B"
+    detection:
+      skill_keywords: ["Cast when Stunned"]
+      ascendancy_keywords: ["Chieftain"]
+    benchmarks:
+      Life:
+        min: 5000
+        good: 7000
+        unit: ""
+      FireResist:
+        min: 75
+        good: 75
+        unit: "%"
+      ChaosResist:
+        min: -60
+        good: 0
+        unit: "%"
+      PhysicalMaximumHitTaken:
+        min: 12000
+        good: 20000
+        unit: ""
+      ElementalMaximumHitTaken:
+        min: 60000
+        good: 100000
+        unit: ""
+    notes:
+      - "CORE MECHANIC: autobomber — build celowo daje się ogłuszać żeby triggerować Cast when Stunned, nie trzeba klikać"
+      - "AFK Ultimatum Farmer — stoisz w środku Ultimatum, masy mobów same do ciebie przychodzą i triggeru"
+      - "Chieftain Sacred Ground (Valako) + Endurance Charges = pasywna regeneracja i DR fizyczna"
+      - "Stun threshold kluczowy — za duży armour = zbyt mało stunów = brak triggerów"
+      - "Skille triggerowane przez CwS: najczęściej Fire burst, Combustion, Frenzy charges generation"
+      - "DPS w PoB może być mylący — real DPS zależy od częstotliwości stunów (map density)"
