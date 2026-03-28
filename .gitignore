@@ -4,3 +4,12 @@ __pycache__/
 *.pyc
 ninja_data/*.json
 pob-mcp/
+
+# --- VS Code i środowisko ---
+.vscode/
+*.code-workspace
+
+# --- Narzędzia AI (Claude, Gemini) ---
+.claude/
+.gemini/
+*logs/
