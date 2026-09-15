@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PathOfBuilding>
+    <Build level="90" targetVersion="3_0" bandit="None" className="Witch" ascendClassName="Necromancer" mainSocketGroup="1">
+        <Spectre id="Metadata/Monsters/Raisen/Hellion"/>
+        <PlayerStat stat="AverageHit" value="8739.51"/>
+        <PlayerStat stat="TotalDPS" value="235966.77"/>
+        <PlayerStat stat="Life" value="5864"/>
+    </Build>
+</PathOfBuilding>

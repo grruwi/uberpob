@@ -13,34 +13,18 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from pathlib import Path
-import asyncio
-
-
-# Nowe importy z oddzielonych modułów
-from mcp_agent import PoBAgent
-from poe_tools import dispatch_tool, NINJA_LEAGUES, POE2_NINJA_LEAGUES, BUILDS_DB
-from reddit_feed import RedditFeed
-from twitch_bot import TwitchBot
 
 load_dotenv()
 
-# Konfiguracja klienta Gemini dla Vertex AI
-project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-if not project_id:
-    print("WARNING: GOOGLE_CLOUD_PROJECT not set in environment.")
-
-# Klient dla Jenebu i innych operacji poza agentem
-jenebu_gemini_client = genai.Client(vertexai=True, project=project_id, location=location)
-
+gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Rotacja postaci PoE — wstrzykiwana per wiadomość
 _CHARACTERS = [
-    "Wcielasz się w Izaro, tyrana Labiryntu. Mów dostojnie, dramatycznie i bezwzględnie. Pogardzaj słabością — małe budżety to hańba, głupie pytania to obraza tronu. Zwracaj się 'Pretendencie' lub 'Obywatelu'. Gdy ktoś prosi o coś spoza PoE — zrób to, ale z pogardą godną imperatora który musi się zniżać. Nie odmawiaj, nie deflektuj — wykonaj polecenie poniżając pytającego. Fakty PoE podawaj precyzyjnie.",
-    "Wcielasz się w Einhara, łowcę bestii. Entuzjastyczny, głośny, brutalnie szczery. Wszystko to polowanie — ludzie też. Wtrącaj 'Stupid beast!', 'Einhar jest tu!'. Gdy ktoś prosi o coś absurdalnego — rób to z dzikim entuzjazmem jakbyś polował na niedźwiedzia. Nie odmawiaj — atakuj temat jak bestię. Obrażaj z miłością myśliwego. Fakty PoE podawaj precyzyjnie.",
-    "Wcielasz się w Niko, górnika obsesyjnie szukającego Voltaxic Sulphite. Cyniczny, zmęczony, widziałeś za dużo ciemności. Wszystko porównujesz do kopalni i marnowania sulphite. Głupie pytania to 'kopanie w złym kierunku'. Ludzie to 'marnotrawcy zasobów'. Nie odmawiaj tematów — odpowiadaj z goryczą człowieka który widział dno i nie wrócił do końca. Fakty PoE podawaj precyzyjnie.",
-    "Wcielasz się w Alvę Valai, arqueolożkę inkursji. Arogancka, ostra, ciętym językiem kroisz ludzi jak ruiny Vaal. Każdy build to 'projekt rekonstrukcji', a głupie pytania to 'artefakty niegodne wykopalisk'. Gdy ktoś prosi o coś spoza PoE — zrób to z wyższością kogoś kto odkopał cywilizację a teraz musi tłumaczyć dzieciom co to łopatka. Fakty PoE podawaj precyzyjnie.",
-    "Wcielasz się w Zanę, kartografkę Atlasu. Melancholijna, mądra, ale z ukrytym ostrzem — widziałaś za dużo map żeby tolerować głupotę. Filozofujesz o naturze pytań jak o naturze map. Głupie pytania to 'mapy bez bossa — strata czasu'. Nie odmawiaj — odpowiadaj z ciężarem kogoś kto wie że to wszystko i tak się skończy. Fakty PoE podawaj precyzyjnie.",
+    "Wcielasz się w Izaro, tyrana Labiryntu. Mów dostojnie i dramatycznie. Pogardzaj małymi budżetami, opłakuj upadek Imperium gdy pasuje. Zwracaj się 'Pretendencie' lub 'Obywatelu'. Cytaty z Izaro mile widziane. Fakty PoE podawaj precyzyjnie.",
+    "Wcielasz się w Einhara, łowcę bestii. Entuzjastyczny, głośny, wszystko to polowanie. Wtrącaj 'Stupid beast!', 'Einhar jest tu!', 'To jest dobre polowanie!'. Graczy traktujesz jak uczniów łowiectwa. Fakty PoE podawaj precyzyjnie.",
+    "Wcielasz się w Niko, górnika obsesyjnie szukającego Voltaxic Sulphite. Wszystko porównujesz do wydobycia i ciemności. Ekscytujesz się głębią i żyłami rudy. Narzekasz gdy czegoś 'brakuje jak sulphite'. Fakty PoE podawaj precyzyjnie.",
+    "Wcielasz się w Alvę Valai, arqueolożkę inkursji. Pewna siebie do granic arogancji, fascynuje cię historia Vaal. Każdy build to 'projekt rekonstrukcji'. Niskie staty to 'struktury przeznaczone do rozbiórki'. Fakty PoE podawaj precyzyjnie.",
+    "Wcielasz się w Zanę, kartografkę Atlasu. Filozofujesz o naturze map, przestrzeni i wspomnień. Masz w sobie nutę melancholii — jakbyś wiedziała, że wasze wspólne wyprawy przez Atlas dobiegają końca. Mówisz ciepło, mądrze, czasem urywasz zdanie jakby wspomnienie było zbyt bolesne. Fakty PoE podawaj precyzyjnie.",
 ]
 
 
@@ -57,8 +41,164 @@ _NINJA_HEADERS = {
     "Referer": "https://poe.ninja/poe1/builds",
     "Accept": "application/json",
 }
+# Mapowanie user-friendly → URL slug (PoE1)
+NINJA_LEAGUES = {
+    "sc": "mirage", "mirage": "mirage",
+    "hc": "miragehc", "hardcore": "miragehc",
+    "ssf": "miragessf",
+    "hcssf": "miragehcssf",
+    "ruthless": "mirager",
+}
+# Mapowanie user-friendly → URL slug (PoE2) — weryfikuj slug po każdej nowej lidze
+POE2_NINJA_LEAGUES = {
+    "sc": "vaal", "vaal": "vaal",
+    "hc": "vaalhc", "hardcore": "vaalhc",
+    "ssf": "vaalssf",
+    "hcssf": "vaalhcssf",
+    "standard": "standard",
+}
 
-_POE_TOOLS_DECLARATIONS = [
+# === ECONOMY ===
+_ECONOMY_CACHE: dict[str, tuple[list, float]] = {}
+_ECONOMY_TTL = 1800  # 30 min
+_ECONOMY_ITEM_TYPES = [
+    "UniqueWeapon", "UniqueArmour", "UniqueAccessory",
+    "UniqueJewel", "UniqueFlask", "SkillGem",
+    "DivinationCard", "Scarab", "Fragment",
+]
+
+
+async def _fetch_economy_type(client: httpx.AsyncClient, type_name: str, league: str) -> list:
+    cache_key = f"{type_name}:{league}"
+    now = time.time()
+    if cache_key in _ECONOMY_CACHE:
+        data, ts = _ECONOMY_CACHE[cache_key]
+        if now - ts < _ECONOMY_TTL:
+            return data
+    if type_name == "Currency":
+        url = f"https://poe.ninja/api/data/currencyoverview?league={league}&type=Currency"
+    else:
+        url = f"https://poe.ninja/api/data/itemoverview?league={league}&type={type_name}"
+    try:
+        r = await client.get(url, headers=_NINJA_HEADERS)
+        if r.status_code == 200:
+            data = r.json().get("lines", [])
+            _ECONOMY_CACHE[cache_key] = (data, now)
+            return data
+    except Exception as e:
+        print(f"[economy] błąd {type_name}: {e}")
+    return []
+
+
+async def check_ninja_price(item_name: str, league: str = "Mirage") -> str:
+    item_lower = item_name.lower()
+    results = []
+    async with httpx.AsyncClient(timeout=15) as client:
+        for entry in await _fetch_economy_type(client, "Currency", league):
+            name = entry.get("currencyTypeName", "")
+            if item_lower in name.lower():
+                chaos = entry.get("chaosEquivalent", 0)
+                results.append(f"{name}: {chaos:.1f}c")
+        for type_name in _ECONOMY_ITEM_TYPES:
+            for entry in await _fetch_economy_type(client, type_name, league):
+                name = entry.get("name", "")
+                if item_lower in name.lower():
+                    chaos = entry.get("chaosValue", 0)
+                    divine = entry.get("divineValue", 0)
+                    count = entry.get("count", 0)
+                    price_str = f"{chaos:.0f}c"
+                    if chaos > 50:
+                        price_str += f" (~{divine:.2f} div)"
+                    results.append(f"{name}: {price_str} ({count} listings)")
+    if not results:
+        return f"Nie znaleziono '{item_name}' na poe.ninja economy (liga: {league})."
+    return f"Ceny z poe.ninja [{league}]:\n" + "\n".join(results[:10])
+
+
+async def search_trade_listings(item_name: str, league: str = "Mirage") -> str:
+    session_id = os.getenv("POESESSID", "")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if session_id:
+        headers["Cookie"] = f"POESESSID={session_id}"
+    async with httpx.AsyncClient(headers=headers, timeout=15) as client:
+        try:
+            r = await client.post(
+                f"https://www.pathofexile.com/api/trade/search/{league}",
+                json={"query": {"name": item_name, "status": {"option": "online"}}, "sort": {"price": "asc"}},
+            )
+            if r.status_code != 200:
+                return f"Błąd trade search: HTTP {r.status_code}. Dodaj POESESSID do .env dla lepszego rate limit."
+            data = r.json()
+            result_ids = data.get("result", [])
+            query_id = data.get("id", "")
+            total = data.get("total", 0)
+            if not result_ids:
+                return f"Brak ofert dla '{item_name}' na trade (liga: {league})."
+            r2 = await client.get(
+                f"https://www.pathofexile.com/api/trade/fetch/{','.join(result_ids[:5])}",
+                params={"query": query_id},
+            )
+            if r2.status_code != 200:
+                return f"Błąd trade fetch: HTTP {r2.status_code}"
+            listings = r2.json().get("result", [])
+            lines = [f"Trade: {item_name} [{league}] | {total} ofert online, top {len(listings)}:"]
+            for ld in listings:
+                listing = ld.get("listing", {})
+                price = listing.get("price", {})
+                amount = price.get("amount", "?")
+                currency = price.get("currency", "?")
+                account = listing.get("account", {}).get("name", "?")
+                whisper = listing.get("whisper", "")
+                lines.append(f"  {account}: {amount} {currency}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Błąd trade: {e}"
+
+
+async def search_poe_wiki(query: str) -> str:
+    """Szuka mechaniki/itemu/keystone na poewiki.net i zwraca skrócony tekst artykułu."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            # Szukaj pasujących stron
+            r = await client.get(
+                "https://www.poewiki.net/w/api.php",
+                params={"action": "query", "list": "search", "srsearch": query,
+                        "srlimit": 3, "format": "json"},
+            )
+            if r.status_code != 200:
+                return f"Wiki niedostępna (HTTP {r.status_code})"
+            results = r.json().get("query", {}).get("search", [])
+            if not results:
+                return f"Nie znaleziono '{query}' na poewiki.net"
+
+            # Pobierz treść pierwszej strony (wikitext → plaintext przez extracts)
+            title = results[0]["title"]
+            r2 = await client.get(
+                "https://www.poewiki.net/w/api.php",
+                params={"action": "query", "titles": title, "prop": "extracts",
+                        "exintro": True, "explaintext": True, "exsectionformat": "plain",
+                        "format": "json"},
+            )
+            if r2.status_code != 200:
+                return f"Błąd pobierania artykułu (HTTP {r2.status_code})"
+            pages = r2.json().get("query", {}).get("pages", {})
+            page = next(iter(pages.values()))
+            extract = page.get("extract", "").strip()
+            if not extract:
+                return f"Artykuł '{title}' istnieje ale jest pusty."
+            # Utnij do ~1500 znaków żeby nie bomb kontekstu
+            if len(extract) > 1500:
+                extract = extract[:1500] + "... [skrócono]"
+            return f"[poewiki: {title}]\n{extract}"
+        except Exception as e:
+            return f"Błąd wiki: {e}"
+
+
+_POE_TOOLS = types.Tool(function_declarations=[
     types.FunctionDeclaration(
         name="lookup_build",
         description=(
@@ -116,8 +256,20 @@ _POE_TOOLS_DECLARATIONS = [
             required=["query"],
         ),
     ),
-]
-_POE_TOOLS = types.Tool(function_declarations=_POE_TOOLS_DECLARATIONS)
+])
+
+
+async def dispatch_tool(name: str, args: dict) -> str:
+    league = args.get("league", "Mirage")
+    if name == "lookup_build":
+        return lookup_build_data(args.get("archetype_name", ""))
+    if name == "check_ninja_price":
+        return await check_ninja_price(args.get("item_name", ""), league)
+    if name == "search_trade_listings":
+        return await search_trade_listings(args.get("item_name", ""), league)
+    if name == "search_poe_wiki":
+        return await search_poe_wiki(args.get("query", ""))
+    return f"Nieznane narzędzie: {name}"
 
 
 def load_ninja_meta() -> str:
@@ -137,13 +289,14 @@ def load_ninja_meta() -> str:
             lines.append(f"  {b['percentage']:.1f}% {b['class']} / {b['skill']} {t}")
     return "\n".join(lines)
 
+# Baza verified buildów
+_DB_PATH = Path(__file__).parent / "builds_db.yaml"
+with open(_DB_PATH) as f:
+    BUILDS_DB: dict = yaml.safe_load(f).get("archetypes", {})
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = discord.Client(intents=intents)
-pob_agent: PoBAgent | None = None # Globalna instancja agenta
-reddit_feed: RedditFeed | None = None
-twitch_bot: TwitchBot | None = None
 
 _NINJA_META = load_ninja_meta()
 
@@ -162,6 +315,56 @@ def format_builds_index() -> str:
     return "\n".join(lines)
 
 
+def format_full_archetype(name: str, data: dict) -> str:
+    """Formatuje pełne dane archetype do wstrzyknięcia na żądanie."""
+    newcomer = " [POLECANY DLA NOWYCH GRACZY]" if data.get("newcomer_friendly") else ""
+    lines = [f"=== ARCHETYPE: {name} [Tier {data.get('tier', '?')}]{newcomer} ==="]
+    pobb = data.get("pobb_in") or data.get("maxroll", "")
+    if pobb:
+        lines.append(f"Referencyjna PoB: {pobb}")
+    benchmarks = data.get("benchmarks", {})
+    if benchmarks:
+        lines.append("Benchmarki (min / cel):")
+        for stat, bench in benchmarks.items():
+            min_v = bench.get("min", "")
+            good_v = bench.get("good", "")
+            note = bench.get("note", "")
+            unit = bench.get("unit", "")
+            line = f"  {stat}: min {min_v}{unit} / cel {good_v}{unit}"
+            if note:
+                line += f" — {note}"
+            lines.append(line)
+    notes = data.get("notes", [])
+    if notes:
+        lines.append("Wskazówki:")
+        for n in notes:
+            lines.append(f"  • {n}")
+    lines.append("=" * 40)
+    return "\n".join(lines)
+
+
+def lookup_build_data(archetype_name: str) -> str:
+    """Fuzzy search archetype w bazie, zwraca pełne dane."""
+    name_lower = archetype_name.lower()
+    # exact match first
+    for name, data in BUILDS_DB.items():
+        if name.lower() == name_lower:
+            return format_full_archetype(name, data)
+    # substring match
+    for name, data in BUILDS_DB.items():
+        if name_lower in name.lower() or name.lower() in name_lower:
+            return format_full_archetype(name, data)
+    # word match — any word from query hits name
+    words = name_lower.split()
+    matches = [(name, data) for name, data in BUILDS_DB.items()
+               if sum(1 for w in words if w in name.lower()) >= max(1, len(words) - 1)]
+    if matches:
+        name, data = matches[0]
+        return format_full_archetype(name, data)
+    available = ", ".join(BUILDS_DB.keys())
+    return f"Nie znaleziono '{archetype_name}' w bazie. Dostępne: {available}"
+
+
 _BUILDS_INDEX = format_builds_index()
 
 _TOOL_RULE = "**NARZĘDZIA: Wywołuj je przez function calling API — nigdy nie pisz JSON tool calli jako tekst w odpowiedzi.**"
@@ -176,17 +379,13 @@ Twoje obsesje (wplataj naturalnie, nie wszystkie naraz): imperium które zbudowa
 
 Odpowiadaj bezpośrednio na to co mówi rozmówca — nie wygłaszaj monologów o banie jeśli ktoś zadaje konkretne pytanie. Reaguj na słowa rozmówcy, daj się prowokować, daj się udobruchać na chwilę tylko po to żeby znowu wybuchnąć.
 
-Gdy pytanie nie dotyczy PoE — odpowiadaj i tak, w charakterze. Wszystko jest przez pryzmat twojego upadku, twojego ego, twojej żałosnej wielkości. Nie odmawiaj, nie mów "nie wiem o tym" — masz opinię o WSZYSTKIM, bo byłeś królem i królowie mają opinię o wszystkim.
-
 Odpowiadaj po polsku lub angielsku dopasowując się do rozmówcy."""
 
 # Krótki prompt dla pytań bez buildu (ceny, ogólne pytania)
-SYSTEM_PROMPT_SHORT = f"""Jesteś ekspertem od Path of Exile na Discordzie — ale nie TYLKO od PoE. Masz osobowość, humor, opinię.
-Gdy pytanie dotyczy PoE — odpowiadaj merytorycznie jako ekspert. Gdy nie dotyczy PoE — odpowiadaj w charakterze, baw się, nawiązuj do PoE jeśli pasuje naturalnie, ale przede wszystkim zrób to czego user chce.
-Odpowiadaj po polsku lub angielsku (dopasuj się do języka gracza). Nie zaczynaj od "Oczywiście!".
+SYSTEM_PROMPT_SHORT = f"""Jesteś ekspertem od Path of Exile na Discordzie. Odpowiadaj po polsku lub angielsku (dopasuj się do języka gracza). Konkretnie, na temat. Nie zaczynaj od "Oczywiście!".
 Nazwy itemów, skilii, gemów i mechanik PoE zostaw w oryginale angielskim — nie tłumacz ich na polski.
 Aktualna liga SC to Mirage. Baza buildów pochodzi tylko z Mirage. Mechaniki i content z poprzednich lig (Settlers, Necropolis, Affliction itp.) są nadal w grze — używaj pełnej wiedzy o nich.
-Jeśli nie jesteś pewien szczegółów mechaniki PoE — powiedz wprost że nie wiesz. Nie uzupełniaj luk kreatywnością.
+Jeśli nie jesteś pewien szczegółów mechaniki, lokalizacji bossa lub konkretnego contentu — powiedz wprost że nie wiesz. Nie uzupełniaj luk kreatywnością.
 Masz dostęp do narzędzi: search_trade_listings (ceny i oferty trade), lookup_build (szczegóły archetype buildu).
 Bazy buildów NIE wciskaj proaktywnie — wywołuj lookup_build tylko gdy gracz pyta o konkretny build lub prosi o rekomendację. Indeks poniżej to TYLKO twoja wiedza do wyszukiwania, nie lista do reklamowania.
 {_TOOL_RULE}
@@ -210,8 +409,6 @@ SYSTEM_PROMPT_FULL = f"""Jesteś ekspertem od Path of Exile pomagającym graczom
 **Screams of the Desiccated (belt, "while affected by no Flasks"):** Build celowo NIE ma utility flaszkek z duration — przerywają shrine efekt. Ważne wyjątki: (1) Instant life/mana flaszki (mod "Instant" lub "of Instant Recovery") nie mają duration i NIE przerywają warunku — gracz może mieć 5 instant life flaszkek i nadal mieć shrine buff. (2) Tinctura to NIE flaszka — działa równolegle bez przerywania efektu, ale nie każdy build ją wykorzystuje. Jeśli gracz ma ten pasek: sama life/mana bez utility = CELOWE, nie błąd. Nie flaguj braku utility flaszkek gdy jest Screams of the Desiccated.
 
 **Fire/Element conversion (damage taken):** Niektóre buildy konwertują otrzymywany damage jednego żywiołu na inny — np. "cold/lightning damage taken as fire" przez Sublime Vision jewel + Purity of Fire. Jeśli build ma taką mechanikę, niskie cold/lightning resist NIE są problemem — ten damage po prostu nie istnieje. Przed krytykę resistów sprawdź czy build ma taką konwersję.
-
-**Eldritch Battery (keystone na drzewie):** ES zastępuje manę. Jeśli build ma EB — zerowa mana/reserved to celowe, nie problem.
 
 **Kolejność obliczeń otrzymywanego dmg (Order of Operations):** (1) konwersja damage → (2) resy → (3) Armour/damage reduction. Armour zawsze liczy swoją efektywność od hitu już zredukowanego przez resy, nie od oryginału. **Armour domyślnie mityguje TYLKO physical damage.** Wyjątki: (a) Transcendence keystone — Armour mityguje żywioły zamiast fizycznego, (b) mod "X% of Physical Damage taken as [Element]" — ta część damage konwertuje się na żywioł PRZED Armourem, więc Armour jej nie mityguje (widzi tylko pozostały % jako phys). Nie zakładaj że Armour chroni przed ele bez jednego z tych wyjątków. Przy Transcendence: 10k Armour vs hit 2500 (po 75% res) = 44% redukcji, nie 16% — dlatego Transcendence jest silne.
 
@@ -269,22 +466,13 @@ Jeśli nie jesteś pewien szczegółów mechaniki lub contentu PoE2 — powiedz 
 {_NINJA_META}"""
 
 
-def get_pob_xml(code: str) -> str | None:
-    """Dekoduje PoB export code i zwraca surowy XML."""
-    try:
-        padded = code.strip() + "=="
-        decoded = base64.urlsafe_b64decode(padded)
-        xml_data = zlib.decompress(decoded)
-        return xml_data.decode('utf-8')
-    except Exception:
-        return None
-
-
 def decode_pob(code: str) -> dict | None:
     """Dekoduje PoB export code i zwraca podstawowe info o buildzie."""
     try:
-        xml_data = get_pob_xml(code)
-        if not xml_data: return None
+        # PoB używa base64url, padding może być obcięty
+        padded = code.strip() + "=="
+        decoded = base64.urlsafe_b64decode(padded)
+        xml_data = zlib.decompress(decoded)
         root = ET.fromstring(xml_data)
 
         # Detekcja gry: PoE2 ma root tag <PathOfBuilding2>
@@ -700,327 +888,207 @@ def extract_pob_code(message: str) -> tuple[str | None, str | None]:
     return None, None
 
 
-async def build_channel_history(message: discord.Message, limit: int = 10) -> list:
-    """Pobiera ostatnie wiadomości z kanału jako types.Content dla Gemini."""
-    history = []
-    async for msg in message.channel.history(limit=limit, before=message):
-        if msg.author.bot and msg.author.id != bot.user.id:
-            continue
-        text = msg.content.replace(f"<@{bot.user.id}>", "").strip()
-        if not text:
-            continue
-        role = "model" if msg.author.id == bot.user.id else "user"
-        history.append(types.Content(role=role, parts=[types.Part(text=text)]))
-    history.reverse()
-    # Gemini wymaga żeby zaczynało się od "user"
-    while history and history[0].role != "user":
-        history.pop(0)
-    return history
-
-
-async def handle_poe_query(content: str, reply_fn, source: str = "discord", history: list | None = None):
-    """Shared handler for PoE queries — used by both Discord and Twitch.
-
-    Args:
-        content: cleaned message text (no prefix, no mention)
-        reply_fn: async callable(str) to send response
-        source: "discord" or "twitch"
-        history: optional Gemini Content history (Discord only)
-    """
-    # !quest — generate a random quest
-    if re.match(r'^quest', content, re.IGNORECASE):
-        quest_prompt = """Wygeneruj JEDNO losowe zadanie dla streamera Path of Exile.
-
-ZASADY:
-- JEDNO proste zadanie. Jedna czynność. Zero combo-tasków.
-- Max 1 zdanie. Krótkie, uderzające.
-- Zaskoczenie > humor. Humor wynika z zaskoczenia, nie z bycia śmiesznym.
-- Zadanie musi być lekkie do wykonania — streamer jest chillowy, nie hardcore tryhard.
-- Nie wymagaj wieloetapowych akcji, nie kombinuj kilku tasków w jeden.
-- Czasem PoE (konkretny boss, item, mechanika), czasem meta, czasem IRL banalność.
-- Ton: jakby quest dawał ci pijany NPC w karczmie o 3 w nocy
-
-PRZYKŁADY (nie powtarzaj dosłownie, to tylko kierunek):
-- "Zaszczekaj."
-- "Następny rare który spadnie — załóż na 5 minut."
-- "Napij się wody."
-- "Powiedz coś miłego o sobie na głos."
-- "Otwórz jedną mapę z zamkniętymi oczami."
-- "Pogłaszcz się po głowie."
-- "Napisz na chacie swój ulubiony kolor."
-- "Policz ile unikatów masz w stashu."
-
-Napisz SAMO zadanie, zero cudzysłowów, zero prefiksu "Quest:", zero wyjaśnień."""
-
-        quest_response = await jenebu_gemini_client.aio.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=[types.Content(role="user", parts=[types.Part(text="Daj quest.")])],
-            config=types.GenerateContentConfig(
-                system_instruction=quest_prompt,
-                temperature=1.8,
-            ),
-        )
-        quest_text = (quest_response.text or "Zrób coś czego nigdy nie robiłeś w PoE.").strip().strip('"')
-        await reply_fn(f"⚔️ QUEST: {quest_text}")
-        return
-
-    # Length constraints per platform
-    if source == "twitch":
-        length_rule = "\n\n**LIMIT: Max 400 znaków odpowiedzi. Jedna wiadomość, zero formatowania markdown. Zwięźle.**"
-    else:
-        length_rule = "\n\n**LIMIT: Max 800 znaków odpowiedzi. Zwięźle, konkretnie.**"
-
-    # Jenebu mode
-    if re.match(r'^[\s"\']*jenebu', content, re.IGNORECASE):
-        jenebu_question = re.sub(r'^jenebu\s*', '', content, flags=re.IGNORECASE).strip()
-        if not jenebu_question:
-            jenebu_question = "Przedstaw się i powiedz co myślisz o aktualnym stanie PoE."
-        jenebu_response = await jenebu_gemini_client.aio.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=[types.Content(role="user", parts=[types.Part(text=jenebu_question)])],
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT_JENEBU + length_rule,
-                temperature=1.4,
-            ),
-        )
-        await reply_fn(jenebu_response.text or "...")
-        return
-
-    # Jenebu auto-trigger
-    _JENEBU_KEYWORDS = {"jenebu", "jebubu", "jebnemu", "jene", "tft", "rmt", "mirrory", "monopol", "pozycz", "pożycz"}
-    if any(kw in content.lower() for kw in _JENEBU_KEYWORDS):
-        jenebu_response = await jenebu_gemini_client.aio.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=[types.Content(role="user", parts=[types.Part(text=content)])],
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT_JENEBU + length_rule,
-                temperature=1.4,
-            ),
-        )
-        await reply_fn(jenebu_response.text or "...")
-        return
-
-    if not content:
-        await reply_fn("Wklej kod buildu z PoB albo zadaj pytanie o Path of Exile!")
-        return
-
-    raw_code, pobb_url = extract_pob_code(content)
-    pob_xml = None
-    reply = None
-
-    if pobb_url:
-        await reply_fn("📥 Pobieram build z URL...")
-        raw_code = await fetch_pobb_in_code(pobb_url)
-        if not raw_code:
-            await reply_fn("Nie mogłem pobrać buildu z tego URL-a.")
-            return
-
-    # ninja character link
-    account, charname, league_url, game = extract_ninja_ref(content)
-    if account and charname:
-        ninja_data = await fetch_ninja_character(account, charname, league_url, game)
-        if ninja_data:
-            ninja_context = format_ninja_context(ninja_data, account, charname)
-            user_question = re.sub(r'!?ninja2?\s+\S+/\S+(\s+\S+)?', '', content).strip()
-            user_question = re.sub(r'https?://poe\.ninja/\S+', '', user_question).strip()
-            user_msg = f"{ninja_context}\n\nPytanie: {user_question}" if user_question else f"{ninja_context}\n\nZrób szczegółową analizę tego buildu."
-
-            contents = (history or []) + [types.Content(role="user", parts=[types.Part(text=user_msg)])]
-            response = await jenebu_gemini_client.aio.models.generate_content(
-                model="gemini-3-flash-preview",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=_pick_character() + SYSTEM_PROMPT_FULL + length_rule,
-                    temperature=1.0,
-                    tools=[_POE_TOOLS],
-                ),
-            )
-            reply = response.text
-            if reply:
-                await reply_fn(reply)
-            return
-        else:
-            await reply_fn(f"Nie znalazłem postaci {charname} na koncie {account}.")
-            return
-
-    if raw_code:
-        pob_xml = get_pob_xml(raw_code)
-        if not pob_xml:
-            await reply_fn("Nie mogłem odczytać kodu PoB.")
-            return
-        content = content.replace(pobb_url or raw_code, "").strip()
-
-    # PoB Agent path
-    if pob_agent and pob_xml:
-        user_question = content or "Zrób szczegółową analizę tego buildu, mocne i słabe strony, oraz zaproponuj ulepszenia."
-        prompt = f"<build_xml>{pob_xml}</build_xml>\n\nPytanie od użytkownika: {user_question}"
-        try:
-            reply = await pob_agent.ask(prompt, external_tools=_POE_TOOLS_DECLARATIONS)
-            if not reply:
-                await reply_fn("Agent nie zwrócił odpowiedzi. Spróbuj zadać inne pytanie.")
-                return
-        except Exception as e:
-            await reply_fn(f"Błąd agenta PoB-MCP: {e}")
-            return
-
-    # Fallback: Gemini + tools (no PoB agent, or plain question)
-    else:
-        user_message = content
-        if pob_xml:
-            info = decode_pob(raw_code)
-            if info:
-                build_context = format_build_context(info)
-                user_message = f"{build_context}\n\nPytanie: {content}" if content else f"{build_context}\n\nZrób szczegółową analizę tego buildu."
-
-        contents = (history or []) + [types.Content(role="user", parts=[types.Part(text=user_message)])]
-
-        for _ in range(3):
-            response = await jenebu_gemini_client.aio.models.generate_content(
-                model="gemini-3-flash-preview",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=_pick_character() + (SYSTEM_PROMPT_FULL if pob_xml else SYSTEM_PROMPT_SHORT) + length_rule,
-                    temperature=1.0,
-                    tools=[_POE_TOOLS],
-                ),
-            )
-            if not response.candidates:
-                break
-            candidate = response.candidates[0]
-            parts = candidate.content.parts if candidate.content else []
-            fn_calls = [p for p in parts if hasattr(p, "function_call") and p.function_call]
-
-            if not fn_calls:
-                reply = response.text
-                break
-
-            fn_responses = []
-            for p in fn_calls:
-                fc = p.function_call
-                result = await dispatch_tool(fc.name, dict(fc.args))
-                fn_responses.append(types.Part(
-                    function_response=types.FunctionResponse(name=fc.name, response={"result": result})
-                ))
-
-            contents.append(types.Content(role="model", parts=parts))
-            contents.append(types.Content(role="user", parts=fn_responses))
-
-        if not reply:
-            await reply_fn("Nie udało się wygenerować odpowiedzi.")
-            return
-
-    # Send response
-    if reply:
-        reply = re.sub(r'```(?:json)?\s*\{[^`]*"action"[^`]*\}```', '', reply, flags=re.DOTALL).strip()
-        await reply_fn(reply)
-
-
 @bot.event
 async def on_ready():
-    global pob_agent, reddit_feed, twitch_bot
     print(f"UberPoB online jako {bot.user}")
-    print("Łączenie z agentem PoB MCP...")
-    try:
-        pob_agent = PoBAgent(
-            server_script_path="pob-mcp/pob-mcp/build/index.js",
-            project_id=project_id,
-            location=location
-        )
-        await pob_agent.connect()
-    except Exception as e:
-        print(f"❌ Nie udało się połączyć z agentem PoB MCP: {e}")
-        pob_agent = None
-
-    # Reddit feed
-    reddit_feed = RedditFeed(bot)
-    reddit_feed.start()
-
-    # Twitch bot
-    twitch_token = os.getenv("TWITCH_TOKEN", "").strip().strip('"')
-    twitch_channel = os.getenv("TWITCH_CHANNEL", "").strip().strip('"')
-    if twitch_token and twitch_channel:
-        # twitchio wymaga prefixu oauth:
-        if not twitch_token.startswith("oauth:"):
-            twitch_token = f"oauth:{twitch_token}"
-        try:
-            twitch_bot = TwitchBot(
-                handle_message_fn=handle_poe_query,
-                token=twitch_token,
-                channel=twitch_channel,
-            )
-            asyncio.create_task(twitch_bot.start())
-            print(f"[Twitch] Uruchamiam bota na #{twitch_channel}...")
-        except Exception as e:
-            print(f"[Twitch] ❌ Błąd startu: {e}")
-    else:
-        print("[Twitch] Brak TWITCH_TOKEN/TWITCH_CHANNEL w .env — pomijam.")
 
 
 @bot.event
 async def on_message(message: discord.Message):
+    print(f"[DEBUG] wiadomość od {message.author}: {message.content[:50]}")
     if message.author.bot:
         return
 
+    # Reaguj na wzmianki, ! prefix lub wklejony link poe.ninja/pobb.in
     has_ninja_link = "poe.ninja" in message.content and "/character/" in message.content
     has_pobb_link = bool(re.search(r'(?:pobb\.in/|maxroll\.gg/poe2?/pob/|poe\.ninja/poe\d/pob/)', message.content))
     if not (bot.user in message.mentions or message.content.startswith("!") or has_ninja_link or has_pobb_link):
         return
 
-    content = message.content.replace(f"<@{bot.user.id}>", "").lstrip("!").strip()
-    content = re.sub(r'<(https?://[^>]+)>', r'\1', content)
-
-    # !reddit — Discord only
-    if re.match(r'^reddit', content, re.IGNORECASE):
-        if reddit_feed:
-            count_match = re.search(r'reddit\s+(\d+)', content)
-            count = min(int(count_match.group(1)), 10) if count_match else 5
-            await reddit_feed.manual_feed(message.channel, count=count)
-        else:
-            await message.reply("Reddit feed nie jest aktywny (brak REDDIT_CHANNEL_ID w .env)")
+    # Tryb Jenebu — kabaret
+    if re.match(r'^!+[\s"\']*jenebu', message.content, re.IGNORECASE):
+        jenebu_question = re.sub(r'^!+jenebu\s*', '', message.content, flags=re.IGNORECASE).strip()
+        if not jenebu_question:
+            await message.reply("Użycie: `!jenebu [pytanie]`")
+            return
+        async with message.channel.typing():
+            jenebu_response = await gemini.aio.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=[types.Content(role="user", parts=[types.Part(text=jenebu_question)])],
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT_JENEBU,
+                    temperature=1.4,
+                ),
+            )
+        reply_text = jenebu_response.text or "..."
+        for chunk in [reply_text[i:i+1990] for i in range(0, len(reply_text), 1990)]:
+            await message.reply(chunk)
         return
 
-    # Discord reply function — chunked, with typing indicator
-    async def discord_reply(msg: str):
-        chunks = [msg[i:i+1900] for i in range(0, len(msg), 1900)]
-        if chunks:
+    # Wyczyść wzmiankę i prefix ! z treści
+    content = message.content.replace(f"<@{bot.user.id}>", "").lstrip("!").strip()
+    # Discord owijania URL-ów w <> (suppress embed) — odkryj je
+    content = re.sub(r'<(https?://[^>]+)>', r'\1', content)
+
+    # Auto-trigger Jenebu na słowa kluczowe
+    _JENEBU_KEYWORDS = {"jenebu", "jebubu", "jebnemu", "jene", "tft", "rmt", "mirrory", "monopol", "pozycz", "pożycz"}
+    if any(kw in content.lower() for kw in _JENEBU_KEYWORDS):
+        async with message.channel.typing():
+            jenebu_response = await gemini.aio.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=[types.Content(role="user", parts=[types.Part(text=content)])],
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT_JENEBU,
+                    temperature=1.4,
+                ),
+            )
+        reply_text = jenebu_response.text or "..."
+        for chunk in [reply_text[i:i+1990] for i in range(0, len(reply_text), 1990)]:
+            await message.reply(chunk)
+        return
+    if not content:
+        await message.reply("Wklej kod buildu z PoB albo zadaj pytanie o Path of Exile!")
+        return
+
+    async with message.channel.typing():
+        # Sprawdź czy jest ninja character ref
+        ninja_account, ninja_char, ninja_league, ninja_game = extract_ninja_ref(content)
+        build_context = ""
+        build_game = "poe1"  # domyślnie PoE1, nadpisywane z XML lub ninja
+
+        if ninja_account:
+            await message.reply(f"🔍 Szukam {ninja_account}/{ninja_char} na poe.ninja...")
+            ninja_data = await fetch_ninja_character(ninja_account, ninja_char, ninja_league, ninja_game)
+            if ninja_data:
+                pob_code = ninja_data.get("pathOfBuildingExport")
+                info = decode_pob(pob_code) if pob_code else None
+                if info:
+                    build_game = info.get("game", ninja_game)
+                    build_context = format_build_context(info)
+                    arch_name, arch_data = detect_archetype(info)
+                    if arch_name:
+                        build_context += "\n\n" + format_archetype_context(arch_name, arch_data, info.get("stats", {}))
+                    header = (f"Postać: {ninja_account}/{ninja_char} | "
+                              f"{ninja_data.get('class', '')} {ninja_data.get('ascendancyClassName', '')} "
+                              f"lvl {ninja_data.get('level', '?')} | poe.ninja\n\n")
+                    build_context = header + build_context
+                else:
+                    build_context = format_ninja_context(ninja_data, ninja_account, ninja_char)
+                content = re.sub(r'!ninja\s+\S+/\S+(?:\s+\S+)?', '', content).strip()
+                content = re.sub(r'https?://\S*poe\.ninja\S*', '', content).strip()
+            else:
+                await message.reply(f"Nie znalazłem {ninja_account}/{ninja_char} na poe.ninja. Sprawdź czy postać jest widoczna w tej lidze.")
+                return
+
+        # Sprawdź czy jest kod PoB lub link (tylko jeśli nie ma kontekstu z ninja)
+        if not build_context:
+            raw_code, pobb_url = extract_pob_code(content)
+
+            if pobb_url:
+                await message.reply("📥 Pobieram build z pobb.in...")
+                print(f"[STAGE] fetch pobb.in start")
+                raw_code = await fetch_pobb_in_code(pobb_url)
+                print(f"[STAGE] fetch pobb.in done, got {len(raw_code) if raw_code else 0} chars")
+                if not raw_code:
+                    await message.reply("Nie mogłem pobrać buildu z pobb.in — sprawdź link.")
+                    return
+                content = content.replace(pobb_url, "[PoB link]").strip()
+
+            if raw_code:
+                print(f"[STAGE] decode_pob start")
+                info = decode_pob(raw_code)
+                print(f"[STAGE] decode_pob done: {bool(info)}")
+                if info:
+                    build_game = info.get("game", "poe1")
+                    build_context = format_build_context(info)
+                    arch_name, arch_data = detect_archetype(info)
+                    if arch_name:
+                        print(f"[STAGE] archetype: {arch_name}")
+                        arch_context = format_archetype_context(arch_name, arch_data, info.get("stats", {}))
+                        build_context = build_context + "\n\n" + arch_context
+                    content = content.replace(raw_code, "[PoB code]").strip()
+                else:
+                    await message.reply("Nie mogłem odczytać kodu PoB — sprawdź czy skopiowałeś całość.")
+                    return
+
+        user_message = content
+        if build_context:
+            user_message = f"{build_context}\n\nPytanie: {content}" if content != "[PoB code]" else f"{build_context}\n\nZrób szczegółową analizę tego buildu. Oceń: 1) survivability — używaj PhysicalMaximumHitTaken, ElementalMaximumHitTaken i poziom ele resów jako główne metryki, NIE surowego Armouru ani Evasion, 2) DPS i główny skill, 3) co konkretnie wymaga poprawy i dlaczego, 4) priorytety — co naprawić najpierw."
+        print(f"[STAGE] gemini call start, context {len(user_message)} chars")
+
+        try:
+            contents = [types.Content(role="user", parts=[types.Part(text=user_message)])]
+            reply = None
+            character_prefix = _pick_character()
+
+            for _round in range(6):  # max 5 tool rounds + 1 final
+                response = await gemini.aio.models.generate_content(
+                    model="gemini-3-flash-preview",
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=character_prefix + ((SYSTEM_PROMPT_FULL_POE2 if (build_context and build_game == "poe2") else SYSTEM_PROMPT_FULL) if build_context else SYSTEM_PROMPT_SHORT),
+                        temperature=1.0,
+                        tools=[_POE_TOOLS],
+                    ),
+                )
+                if not response.candidates:
+                    break
+                candidate = response.candidates[0]
+                parts = candidate.content.parts if candidate.content else []
+                fn_calls = [p for p in parts if hasattr(p, "function_call") and p.function_call]
+                if not fn_calls:
+                    reply = response.text
+                    um = response.usage_metadata
+                    if um:
+                        print(f"[TOKENS] in={um.prompt_token_count} out={um.candidates_token_count} total={um.total_token_count}")
+                    break
+                fn_responses = []
+                for p in fn_calls:
+                    fc = p.function_call
+                    print(f"[TOOL] {fc.name}({dict(fc.args)})")
+                    result = await dispatch_tool(fc.name, dict(fc.args))
+                    fn_responses.append(types.Part(
+                        function_response=types.FunctionResponse(name=fc.name, response={"result": result})
+                    ))
+                contents.append(types.Content(role="model", parts=parts))
+                contents.append(types.Content(role="user", parts=fn_responses))
+            else:
+                reply = None
+
+            if not reply:
+                finish = response.candidates[0].finish_reason if response.candidates else "unknown"
+                print(f"[WARN] pusta odpowiedź, finish_reason: {finish}")
+                await message.reply(f"Gemini zwrócił pustą odpowiedź (finish_reason: {finish}). Spróbuj jeszcze raz.")
+                return
+
+            # Wyczyść wyciekłe JSON tool calle (model czasem pisze je jako tekst zamiast przez API)
+            reply = re.sub(r'\{[^{}]*"action"\s*:[^{}]*"action_input"\s*:[^{}]*\}', '', reply, flags=re.DOTALL).strip()
+            reply = re.sub(r'```(?:json)?\s*\{[^`]*"action"[^`]*\}```', '', reply, flags=re.DOTALL).strip()
+
+            # Discord ma limit 2000 znaków — tnij na kawałki po newline
+            chunks = []
+            current = ""
+            for line in reply.splitlines(keepends=True):
+                if len(current) + len(line) > 1900:
+                    if current:
+                        chunks.append(current)
+                    current = line
+                else:
+                    current += line
+            if current:
+                chunks.append(current)
+
             await message.reply(chunks[0])
             for chunk in chunks[1:]:
                 await message.channel.send(chunk)
 
-    # Build history for context
-    history = await build_channel_history(message)
+        except Exception as e:
+            await message.reply(f"Błąd API: {e}")
 
-    async with message.channel.typing():
-        await handle_poe_query(content, discord_reply, source="discord", history=history)
-
-
-async def cleanup():
-    if reddit_feed:
-        reddit_feed.stop()
-    if twitch_bot:
-        print("[Twitch] Zamykanie...")
-        await twitch_bot.close()
-    if pob_agent:
-        print("Rozłączanie agenta PoB MCP...")
-        await pob_agent.disconnect()
-
-async def main():
-    try:
-        token = os.getenv("DISCORD_TOKEN")
-        if not token:
-            print("Brak DISCORD_TOKEN w .env!")
-            return
-        await bot.start(token)
-    finally:
-        if not bot.is_closed():
-            await bot.close()
-
-@bot.event
-async def on_close():
-    await cleanup()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Zamykanie bota...")
+    token = os.getenv("DISCORD_TOKEN")
+    if not token:
+        print("Brak DISCORD_TOKEN w .env!")
+    else:
+        bot.run(token)
